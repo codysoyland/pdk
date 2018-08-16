@@ -2,7 +2,7 @@ version: 2
 jobs:
   test-golang-1.11: &base-test
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.11-rc
     working_directory: /go/src/github.com/pilosa/pdk
     steps:
       - checkout
