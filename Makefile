@@ -45,7 +45,7 @@ install: vendor
 
 gometalinter: vendor
 	gometalinter --vendor --disable-all \
-		--deadline=60s \
+		--deadline=120s \
 		--enable=deadcode \
 		--enable=goimports \
 		--enable=gotype \
