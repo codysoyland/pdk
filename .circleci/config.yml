@@ -3,6 +3,9 @@ defaults: &defaults
   working_directory: /go/src/github.com/pilosa/pdk
   docker:
     - image: circleci/golang:1.10
+fast-checkout: &fast-checkout
+  attach_workspace:
+    at: .
 jobs:
   build:
     <<: *defaults
@@ -11,20 +14,18 @@ jobs:
       - restore_cache:
           keys:
             - vendor-cache-{{ checksum "Gopkg.lock" }}
-      - run: make vendor
+      - run: [ -d vendor ] || make vendor
       - save_cache:
           key: vendor-cache-{{ checksum "Gopkg.lock" }}
           paths:
             - vendor
       - persist_to_workspace:
-          root: vendor
+          root: .
           paths: "*"
   linter:
     <<: *defaults
     steps:
-      - checkout
-      - attach_workspace:
-          at: vendor
+      - *fast-checkout
       - run: go get -u github.com/alecthomas/gometalinter
       - run: gometalinter --install
       - run: go get github.com/remyoudompheng/go-misc/deadcode
@@ -32,9 +33,7 @@ jobs:
   test-golang-1.10: &base-test
     <<: *defaults
     steps:
-      - checkout
-      - attach_workspace:
-          at: vendor
+      - *fast-checkout
       - run: make test
   test-golang-1.11-rc:
     <<: *base-test
