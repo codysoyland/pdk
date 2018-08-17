@@ -1,19 +1,36 @@
 version: 2
+defaults: &defaults
+  working_directory: /go/src/github.com/pilosa/pdk
+  docker:
+    - image: circleci/golang:1.10
 jobs:
-  test-golang-1.11: &base-test
-    docker:
-      - image: circleci/golang:1.11-rc
+  build:
+    <<: *defaults
+    steps:
+      - make vendor
+      - persist_to_workspace:
+        root: vendor
+        paths: "*"
+  test-golang-1.10: &base-test
+    <<: *defaults
     working_directory: /go/src/github.com/pilosa/pdk
     steps:
       - checkout
+      - attach_workspace:
+        at: vendor
       - run: make test
-  test-golang-1.10:
+  test-golang-1.11-rc:
     <<: *base-test
     docker:
-      - image: circleci/golang:1.10
+      - image: circleci/golang:1.11-rc
 workflows:
   version: 2
   test:
     jobs:
-      - test-golang-1.10
-      - test-golang-1.11
+      - build
+      - test-golang-1.10:
+        requires:
+          - flow
+      - test-golang-1.11-rc:
+        requires:
+          - flow
