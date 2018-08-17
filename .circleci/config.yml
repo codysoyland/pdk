@@ -50,7 +50,7 @@ workflows:
             - build
       - test-golang-1.10:
           requires:
-            - linter
+            - build
       - test-golang-1.11-rc:
           requires:
-            - linter
+            - build
