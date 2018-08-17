@@ -7,17 +7,17 @@ jobs:
   build:
     <<: *defaults
     steps:
-      - make vendor
+      - checkout
+      - run: make vendor
       - persist_to_workspace:
-        root: vendor
-        paths: "*"
+          root: vendor
+          paths: "*"
   test-golang-1.10: &base-test
     <<: *defaults
-    working_directory: /go/src/github.com/pilosa/pdk
     steps:
       - checkout
       - attach_workspace:
-        at: vendor
+          at: vendor
       - run: make test
   test-golang-1.11-rc:
     <<: *base-test
