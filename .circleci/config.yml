@@ -18,6 +18,9 @@ jobs:
       - checkout
       - attach_workspace:
           at: vendor
+      - run: go get -u github.com/alecthomas/gometalinter
+      - run: gometalinter --install
+      - run: go get github.com/remyoudompheng/go-misc/deadcode
       - run: make gometalinter
   test-golang-1.10: &base-test
     <<: *defaults
