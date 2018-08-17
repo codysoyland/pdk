@@ -29,8 +29,8 @@ workflows:
     jobs:
       - build
       - test-golang-1.10:
-        requires:
-          - flow
+          requires:
+            - flow
       - test-golang-1.11-rc:
-        requires:
-          - flow
+          requires:
+            - flow
