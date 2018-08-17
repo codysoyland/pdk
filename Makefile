@@ -1,4 +1,4 @@
-.PHONY: dep pdk vendor-update docker pdk crossbuild install test test-all
+.PHONY: dep pdk vendor-update docker pdk crossbuild install test test-all gometalinter
 
 DEP := $(shell command -v dep 2>/dev/null)
 PROTOC := $(shell command -v protoc 2>/dev/null)
@@ -42,3 +42,20 @@ crossbuild: vendor
 
 install: vendor
 	go install $(LDFLAGS) $(FLAGS) $(CLONE_URL)/cmd/pdk
+
+gometalinter: vendor
+	gometalinter --vendor --disable-all \
+		--deadline=60s \
+		--enable=deadcode \
+		--enable=goimports \
+		--enable=gotype \
+		--enable=gotypex \
+		--enable=ineffassign \
+		--enable=interfacer \
+		--enable=maligned \
+		--enable=nakedret \
+		--enable=unconvert \
+		--enable=vet \
+		--exclude "^internal/.*\.pb\.go" \
+		--exclude "^pql/pql.peg.go" \
+		./...

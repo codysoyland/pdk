@@ -12,6 +12,13 @@ jobs:
       - persist_to_workspace:
           root: vendor
           paths: "*"
+  linter:
+    <<: *defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: vendor
+      - run: make gometalinter
   test-golang-1.10: &base-test
     <<: *defaults
     steps:
@@ -28,9 +35,12 @@ workflows:
   test:
     jobs:
       - build
+      - linter:
+          requires:
+            - build
       - test-golang-1.10:
           requires:
-            - build
+            - linter
       - test-golang-1.11-rc:
           requires:
-            - build
+            - linter
