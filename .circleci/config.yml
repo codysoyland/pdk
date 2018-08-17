@@ -30,7 +30,7 @@ workflows:
       - build
       - test-golang-1.10:
           requires:
-            - flow
+            - build
       - test-golang-1.11-rc:
           requires:
-            - flow
+            - build
