@@ -32,50 +32,62 @@
 
 package pdk
 
-import (
-	"sync"
-
-	"github.com/pkg/errors"
-)
+type recordError struct {
+	record interface{}
+	err    error
+}
 
 // PeekingSource is a wrapper for Source which implements the
 // Peeker interface by reading the next record from Source
 // and caching it for the next call to Record().
 type PeekingSource struct {
-	Source
-
-	mu       sync.RWMutex
-	rec      interface{}
-	recordFn func() (interface{}, error)
+	recordChan chan chan recordError
+	peekChan   chan chan recordError
 }
 
 func (p *PeekingSource) Peek() (interface{}, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	var err error
-	p.rec, err = p.Source.Record()
-	if err != nil {
-		return nil, errors.Wrap(err, "getting next record for peeking")
-	}
-	p.recordFn = p.cachedRecord
-	return p.rec, nil
-}
-
-func (p *PeekingSource) cachedRecord() (interface{}, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.recordFn = p.Source.Record
-	return p.rec, nil
+	ch := make(chan recordError)
+	p.peekChan <- ch
+	re := <-ch
+	return re.record, re.err
 }
 
 func (p *PeekingSource) Record() (interface{}, error) {
-	if p.recordFn == nil {
-		p.recordFn = p.Source.Record
-	}
-	return p.recordFn()
+	ch := make(chan recordError)
+	p.recordChan <- ch
+	re := <-ch
+	return re.record, re.err
 }
 
 func NewPeekingSource(source Source) *PeekingSource {
-	return &PeekingSource{Source: source}
+	ps := &PeekingSource{
+		recordChan: make(chan chan recordError),
+		peekChan:   make(chan chan recordError),
+	}
+
+	var cachedRecordError *recordError
+
+	go func() {
+		for {
+			select {
+			case rc := <-ps.recordChan:
+				if cachedRecordError != nil {
+					rc <- *cachedRecordError
+					cachedRecordError = nil
+				} else {
+					r, e := source.Record()
+					rc <- recordError{r, e}
+				}
+			case rc := <-ps.peekChan:
+				if cachedRecordError != nil {
+					rc <- *cachedRecordError
+				} else {
+					r, e := source.Record()
+					cachedRecordError = &recordError{r, e}
+					rc <- *cachedRecordError
+				}
+			}
+		}
+	}()
+	return ps
 }
